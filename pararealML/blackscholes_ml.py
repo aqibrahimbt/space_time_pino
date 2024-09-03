@@ -139,6 +139,16 @@ piml.train(
     ),
 )
 
+# Define space decomposition and composition functions
+def space_decomposition(domain, n_subdomains):
+    x_split = np.array_split(domain[0], n_subdomains[0])
+    y_split = np.array_split(domain[1], n_subdomains[1])
+    return [np.meshgrid(x, y) for x in x_split for y in y_split]
+
+def space_composition(subdomains):
+    return np.concatenate([np.concatenate(sd, axis=1) for sd in subdomains], axis=0)
+
+
 # Save the model and PhysicsInformedMLOperator
 fno_model.save("dump/fno2d_model")
 with open("dump/fno2d_instance", "wb") as f:
@@ -151,21 +161,39 @@ ivp = InitialValueProblem(cp, (0.0, 1.0), ic)
 f = FDMOperator(RK4(), CrankNicolsonMethod(), 0.001)
 g = FDMOperator(RK4(), CrankNicolsonMethod(), 0.01)
 g_star = piml
-# p = PararealOperator(f, g_star, 0.0025) # time only
-p = SpaceTimePararealOperator(f, g_star, 0.0025, 0.0025, 0.0025) # space-time
+# Create SpaceTimePararealOperator
+p = SpaceTimePararealOperator(
+    f, 
+    g_star, 
+    space_decomposition=lambda domain: space_decomposition(domain, (2, 2)),  # Decompose into 2x2 grid
+    space_composition=space_composition,
+    termination_condition=0.0025,
+    max_iterations=10
+)
 
+# Solve using different methods and measure time
 mpi_time("fine")(f.solve)(ivp)
 mpi_time("coarse")(g.solve)(ivp)
 mpi_time("coarse_ml")(piml.solve)(ivp)
 mpi_time("parareal")(p.solve)(ivp)
 
-for p in [2.0, 3.5, 5.0]:
-    for q in [2.0, 3.5, 5.0]:
-        ic = MarginalBetaProductInitialCondition(cp, [[(p, p), (q, q)]])
+# Generate and save plots for different initial conditions
+for p_val in [2.0, 3.5, 5.0]:
+    for q_val in [2.0, 3.5, 5.0]:
+        ic = MarginalBetaProductInitialCondition(cp, [[(p_val, p_val), (q_val, q_val)]])
         ivp = InitialValueProblem(cp, t_interval, ic)
-        fdm_solution = fdm.solve(ivp)
+        
+        # FDM solution
+        fdm_solution = f.solve(ivp)
         for i, plot in enumerate(fdm_solution.generate_plots()):
-            plot.save(f"diff_2d_fdm_{p:.1f}_{q:.1f}_{i}").close()
+            plot.save(f"diff_2d_fdm_{p_val:.1f}_{q_val:.1f}_{i}").close()
+        
+        # PIML (FNO) solution
         piml_solution = piml.solve(ivp)
         for i, plot in enumerate(piml_solution.generate_plots()):
-            plot.save(f"diff_2d_fno_{p:.1f}_{q:.1f}_{i}").close()
+            plot.save(f"diff_2d_fno_{p_val:.1f}_{q_val:.1f}_{i}").close()
+        
+        # Space-Time Parareal solution
+        parareal_solution = p.solve(ivp)
+        for i, plot in enumerate(parareal_solution.generate_plots()):
+            plot.save(f"diff_2d_parareal_{p_val:.1f}_{q_val:.1f}_{i}").close()

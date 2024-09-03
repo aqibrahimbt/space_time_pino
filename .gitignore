@@ -3,3 +3,4 @@
 output/
 parareal/output/
 dask-worker-space/
+Dump/

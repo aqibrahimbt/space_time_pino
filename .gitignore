@@ -1,0 +1,5 @@
+.vscode/
+*.code-workspace
+output/
+parareal/output/
+dask-worker-space/

@@ -27,11 +27,6 @@ right_boundary_condition = NeumannBoundaryCondition(
     lambda x, t: np.zeros((len(x), 1)), is_static=True
 )
 
-# bcs = [
-#     (lower_boundary_condition, upper_boundary_condition),
-#     (left_boundary_condition, right_boundary_condition),
-# ]
-
 bcs = [
     (
         NeumannBoundaryCondition(lambda x, t: np.zeros((len(x), 1))),
@@ -48,9 +43,6 @@ ivp = InitialValueProblem(cp, (0.0, 1.0), ic)
 f = FDMOperator(RK4(), CrankNicolsonMethod(), 0.0001)
 g = FDMOperator(RK4(), CrankNicolsonMethod(), 0.01)
 p = PararealOperator(f, g, 0.0025)
-
-f_solution = f.solve(ivp)
-g_solution = g.solve(ivp)
 
 
 mpi_time("f")(f.solve)(ivp)

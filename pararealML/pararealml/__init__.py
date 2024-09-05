@@ -32,6 +32,7 @@ from pararealml.differential_equation import (
     VanDerPolEquation,
     WaveEquation,
     BlackScholesEquation,
+    MultiDimensionalBlackScholesEquation,
 )
 from pararealml.initial_condition import (
     ConstantInitialCondition,
@@ -123,4 +124,5 @@ __all__ = [
     "QuiverPlot",
     "Solution",
     "BlackScholesEquation", 
+    "MultiDimensionalBlackScholesEquation",
 ]

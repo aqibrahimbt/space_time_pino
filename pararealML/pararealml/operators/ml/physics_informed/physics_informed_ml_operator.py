@@ -130,6 +130,8 @@ class PhysicsInformedMLOperator(Operator):
                 "the model arguments cannot be None if the operator's model "
                 "is None"
             )
+        
+        # print("training_data_args: ", training_data_args)
 
         if self._auto_regressive:
             if t_interval != (0.0, self._d_t):
@@ -164,6 +166,7 @@ class PhysicsInformedMLOperator(Operator):
             cp, t_interval, validation_data_args
         )
         test_dataset = self._create_dataset(cp, t_interval, test_data_args)
+        # print("training_dataset: ", training_dataset)
 
         model = (
             self._model

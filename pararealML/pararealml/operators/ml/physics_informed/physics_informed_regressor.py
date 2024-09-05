@@ -13,6 +13,7 @@ from pararealml.operators.ml.physics_informed.physics_informed_ml_symbol_mapper 
     PhysicsInformedMLSymbolMapFunction,
     PhysicsInformedMLSymbolMapper,
 )
+tf.config.run_functions_eagerly(True)
 
 
 class PhysicsInformedRegressor(tf.keras.Model):
@@ -32,9 +33,11 @@ class PhysicsInformedRegressor(tf.keras.Model):
         inputs = tf.keras.layers.Input(
             shape=(np.prod(cp.y_shape(vertex_oriented)) + x_dim + 1,)
         )
-        base_model_output_shape = tf.keras.Model(
-            inputs=inputs, outputs=model.call(inputs)
-        ).output.shape
+        print('inputs.............................', inputs.shape)
+        #base_model_output_shape = tf.keras.Model(inputs=inputs, outputs=model.call(inputs)).output.shape
+        base_model_output_shape = tf.keras.Model(inputs=inputs, outputs=model(inputs)).output.shape
+
+        print('base_model_output_shape.............................', base_model_output_shape)
         if base_model_output_shape != (None, y_dim):
             raise ValueError(
                 "base regression model output shape "
@@ -147,22 +150,35 @@ class PhysicsInformedRegressor(tf.keras.Model):
             + [self._model_loss_tracker]
         )
 
-    def call(
-        self,
-        inputs: Union[
-            tf.Tensor, Tuple[tf.Tensor, tf.Tensor, Optional[tf.Tensor]]
-        ],
-        training: Optional[bool] = None,
-        mask: Optional[tf.Tensor] = None,
-    ) -> tf.Tensor:
-        if isinstance(inputs, tuple):
-            u = inputs[0]
-            t = inputs[1]
-            x = inputs[2]
-            input_tensor = tf.concat((u, t) if x is None else inputs, axis=1)
-        else:
-            input_tensor = inputs
-        return self._model(input_tensor, training=training, mask=mask)
+    # def call(
+    #     self,
+    #     inputs: Union[
+    #         tf.Tensor, Tuple[tf.Tensor, tf.Tensor, Optional[tf.Tensor]]
+    #     ],
+    #     training: Optional[bool] = None,
+    #     mask: Optional[tf.Tensor] = None,
+    # ) -> tf.Tensor:
+    #     if isinstance(inputs, tuple):
+    #         u = inputs[0]
+    #         t = inputs[1]
+    #         x = inputs[2]
+    #         input_tensor = tf.concat((u, t) if x is None else inputs, axis=1)
+    #     else:
+    #         input_tensor = inputs
+    #     return self._model(input_tensor, training=training, mask=mask)
+
+    def call(self, inputs, training=None, mask=None):
+        # Extract the dynamic batch size from inputs
+        batch_size = tf.shape(inputs)[0]  # Dynamically get the batch size
+        height = 3  # Set the appropriate height and width based on your model requirements
+        width = 3
+        
+        # Reshape the inputs dynamically
+        inputs = tf.reshape(inputs, (batch_size, height, width))
+
+        # Continue with your logic
+        return self._model(inputs, training=training)
+
 
     @tf.function
     def train_step(

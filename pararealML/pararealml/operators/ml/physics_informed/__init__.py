@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from pararealml.operators.ml.deeponet import DeepONet
+from pararealml.operators.ml.physics_informed.fno import FNO
 from pararealml.operators.ml.physics_informed.auto_differentiator import (
     AutoDifferentiator,
 )
@@ -22,8 +22,9 @@ from pararealml.operators.ml.physics_informed.physics_informed_regressor import 
     PhysicsInformedRegressor,
 )
 
+
 __all__ = [
-    "DeepONet",
+    "FNO",
     "AutoDifferentiator",
     "CollocationPointSampler",
     "UniformRandomCollocationPointSampler",
